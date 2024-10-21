@@ -62,3 +62,30 @@ class FlightViewTestCase(TestCase):
         c.post(reverse('flights:book', args=(f.id,)),
                {'passenger': passenger.id})
         self.assertEqual(f.passengers.count(), 1)
+    def test_book_passenger_success(self):
+        """Can successfully book a passenger on a flight with available seats."""
+
+    # Create a new passenger for the booking
+        new_passenger = Passenger.objects.create(first="Ron", last="Weasley")
+    
+    # Get the flight for which we want to book the passenger
+        flight = Flight.objects.first()  # Assuming at least one flight exists
+    
+    # Ensure the flight has enough capacity
+        flight.capacity = 2  # Set capacity to allow for another booking
+        flight.save()
+
+    # Simulate booking the passenger
+        c = Client()
+        response = c.post(reverse('flights:book', args=(flight.id,)), {'passenger': new_passenger.id})
+
+    # Check for a redirect response (status code 302)
+        self.assertEqual(response.status_code, 302)
+
+    # Refresh the flight instance to see the updated passengers
+        flight.refresh_from_db()
+
+    # Assert that the new passenger is now in the flight's passengers
+        self.assertIn(new_passenger, flight.passengers.all())
+        self.assertEqual(flight.passengers.count(), 2)  # Check passenger count
+
